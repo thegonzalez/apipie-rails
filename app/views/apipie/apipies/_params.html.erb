@@ -1,42 +1,61 @@
-<% level ||= 0 %>
-<% col = 255 - level * 5 %>
-<% params.each do |param| %>
-  <% if !param[:show] %>
-    <%= render(:partial => "params", :locals => {:level => level, :params => param[:params]}) unless param[:params].blank? %>
-    <% next %>
-  <% end %>
-  <tr style='background-color:rgb(<%= "#{col},#{col},#{col}" %>);'>
-    <td>
-      <strong><%= param[:full_name] %> </strong><br>
-      <small>
-        <%= param[:required] ? t('apipie.required') : t('apipie.optional') %>
-        <%= param[:allow_nil] ? ', '+t('apipie.nil_allowed') : '' %>
-      </small>
-    </td>
-    <td>
-      <%= param[:description].html_safe %>
-      <%- if param[:validations].present? || param[:validator].present? %>
-        <p><strong>Validations:</strong></p>
-        <ul>
-          <%- if param[:validator].present? %>
-            <li><%= Apipie.markup_to_html(param[:validator]).html_safe %></li>
-          <%- end %>
-          <%- if param[:validations].present? %>
-            <%- param[:validations].each do |item| %>
-              <li><%= item.html_safe %></li>
-            <%- end %>
-          <%- end %>
-        </ul>
-      <%- end %>
+<%= raw method[:full_description] %>
 
-      <% unless param[:metadata].blank? %>
-        <br>
-        Metadata:
-        <%= render(:partial => "metadata", :locals => {:meta => param[:metadata]}) %>
-      <% end %>
-    </td>
-
-  </tr>
-
-  <%= render(:partial => "params", :locals => {:level => level + 1, :params => param[:params]}) unless param[:params].blank? %>
+<% unless method[:formats].blank? %>
+  <%= heading(t('apipie.supported_formats'), h_level) %>
+  <%= method[:formats].join(', ') %>
 <% end %>
+<% unless method[:errors].blank? %>
+  <%= heading(t('apipie.errors'), h_level) %>
+  <%= render(:partial => "errors", :locals => {:errors => method[:errors]}) %>
+<% end %>
+
+<% unless method[:metadata].blank? %>
+  <%= heading(t('apipie.metadata'), h_level) %>
+  <%= render(:partial => "metadata", :locals => {:meta => method[:metadata]}) %>
+<% end %>
+
+<% unless method[:examples].blank? %>
+  <%= heading(t('apipie.examples'), h_level) %>
+  <% method[:examples].each do |example| %>
+    <pre class="prettyprint"><%= example %></pre>
+  <% end %>
+<% end %>
+
+<% unless method[:params].blank? %>
+  <%= heading(t('apipie.params'), h_level) %>
+  <table class='table'>
+    <thead>
+      <tr>
+        <th><%= t('apipie.param_name') %></th>
+        <th><%= t('apipie.description') %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= render(:partial => "params", :locals => {:params => method[:params]}) %>
+    </tbody>
+  </table>
+<% end %>
+<% unless method[:returns].blank? %>
+  <%= heading(t('apipie.returns'), h_level) %>
+  <% method[:returns].each do |item| %>
+    <%= heading("#{t('apipie.code')}: #{item[:code]}", h_level + 1) %>
+    <% if item[:description] %>
+      <%= heading("#{t('apipie.description')}:", h_level + 2) %>
+      <p><%= item[:description] %></p>
+    <% end %>
+    <table class='table'>
+      <thead>
+        <tr>
+          <th><%= t('apipie.param_name') %></th>
+          <th><%= t('apipie.description') %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= render(:partial => "params", :locals => {:params => item[:returns_object]}) %>
+      </tbody>
+    </table>
+  <% end %>
+<% end %>
+
+<%= render(:partial => "headers", :locals => {:headers => method[:headers], :h_level => h_level }) %>
+
